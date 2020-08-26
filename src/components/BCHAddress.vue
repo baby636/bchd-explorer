@@ -33,6 +33,10 @@
           <td>Legacy Address</td>
           <td>{{addressData['legacy']}}</td>
         </tr>
+        <!-- <tr>
+          <td>Slp Address</td>
+          <td>{{addressData['slp']}}</td>
+        </tr> -->
         <tr>
           <td>Confirmed Transactions</td>
           <td>{{addressData['confirmed_transactions']}}</td>
@@ -47,12 +51,17 @@
         </tr>
       </tbody>
     </table>
+    <SLPAddress :tokens="addressData['tokens']" />
   </div>
 </template>
 
 <script>
+import SLPAddress from "./SLPAddress.vue";
 export default {
   name: "bchaddress",
-  props: ["address", "addressData"]
+  props: ["address", "addressData"],  
+  components: {
+    SLPAddress
+  }
 };
 </script>

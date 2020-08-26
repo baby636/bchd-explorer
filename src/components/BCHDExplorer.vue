@@ -60,8 +60,9 @@
 </template>
 
 <script>
+import Big from "big.js";
 import { GrpcClient } from "grpc-bchrpc-web";
-import bchaddr from "bchaddrjs";
+import bchaddr from "bchaddrjs-slp";
 import BCHAddress from "./BCHAddress.vue";
 import BCHBlock from "./BCHBlock.vue";
 import BCHTransaction from "./BCHTransaction.vue";
@@ -73,7 +74,7 @@ const MAINNET = "mainnet";
 
 // These can be changed to any BCHD gRPC endpoint.
 // The ones below are the default values in grpc-bchrpc-web.
-const MAINNET_URL = "https://bchd.greyh.at:8335";
+const MAINNET_URL = "https://bchd.ny1.simpleledger.io";
 const TESTNET_URL = "https://bchd-testnet.greyh.at:18335";
 
 export default {
@@ -187,7 +188,8 @@ export default {
       try {
         var addrUtxoResult = await this.grpc.getAddressUtxos({
           address: addr,
-          includeMempool: true
+          includeMempool: true,
+          includeTokenMetadata: true
         });
         var addrResult = await this.grpc.getAddressTransactions({
           address: addr,
@@ -202,12 +204,49 @@ export default {
         this.addressData["satoshis"] = total;
         this.addressData["balance"] = sb.toBitcoin(total);
         this.addressData["legacy"] = bchaddr.toLegacyAddress(addr);
+        this.addressData["slp"] = bchaddr.toSlpAddress(addr);
         this.addressData[
           "confirmed_transactions"
         ] = addrResult.getConfirmedTransactionsList().length;
         this.addressData[
           "unconfirmed_transactions"
         ] = addrResult.getUnconfirmedTransactionsList().length;
+        const _tokens = new Map();
+        const tokenMetadata = new Map();
+        addrUtxoResult.getTokenMetadataList().forEach(tm => {
+          const _id = Buffer.from(tm.getTokenId_asU8()).toString("hex");
+          const _tmObj = { token_id: _id, name: "", ticker: "" };
+          tokenMetadata.set(_id, _tmObj);
+          if (tm.hasType1()) {
+            _tmObj.name = Buffer.from(tm.getType1().getTokenName()).toString("utf8");
+            _tmObj.ticker = Buffer.from(tm.getType1().getTokenTicker()).toString("utf8");
+          } else if (tm.hasNft1Group()) {
+            _tmObj.name = Buffer.from(tm.getNft1Group().getTokenName()).toString("utf8");
+            _tmObj.ticker = Buffer.from(tm.getNft1Group().getTokenTicker()).toString("utf8");
+          } else if (tm.hasNft1Child()) {
+            _tmObj.name = Buffer.from(tm.getNft1Child().getTokenName()).toString("utf8");
+            _tmObj.ticker = Buffer.from(tm.getNft1Child().getTokenTicker()).toString("utf8");
+          }
+        });
+        addrUtxoResult.getOutputsList().forEach(function(a) {
+          if (a.getSlpToken()) {
+            const tok = a.getSlpToken();
+            const tokenID = Buffer.from(tok.getTokenId_asU8()).toString("hex");
+            if (_tokens.has(tokenID)) {
+              const _tok = _tokens.get(tokenID);
+              _tok.balance = _tok.balance.add(tok.getAmount());
+            } else {
+              _tokens.set(tokenID, {
+                token_id: tokenID,
+                name: tokenMetadata.get(tokenID).name,
+                ticker: tokenMetadata.get(tokenID).ticker,
+                decimals: tok.getDecimals(),
+                balance: Big(tok.getAmount())
+              });
+            }
+          }
+        });
+        this.addressData["tokens"] = Array.from(_tokens).map(v => v[1]);
       } catch (error) {
         this.result = "Address not found.";
       }
@@ -300,8 +339,10 @@ export default {
         satoshis: 0,
         utxos: 0,
         legacy: "",
+        slp: "",
         confirmed_transactions: 0,
-        unconfirmed_transactions: 0
+        unconfirmed_transactions: 0,
+        tokens: [],
       };
     },
     defaultBlockData: function() {
