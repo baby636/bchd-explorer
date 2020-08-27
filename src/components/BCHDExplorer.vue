@@ -17,11 +17,11 @@
 <template>
   <div class="explorer">
     <section class="section">
-      <div class="container has-text-right">
+      <!-- <div class="container has-text-right">
         <input type="checkbox" id="checkbox" v-model="testnet" v-on:change="updateNetwork()" />
         &nbsp;
         <label for="checkbox">Testnet</label>
-      </div>
+      </div> -->
       <div class="container">
         <img class="logo" src="../assets/bchd-explorer.svg" />
         <div class="field">
