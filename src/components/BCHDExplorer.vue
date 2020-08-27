@@ -377,12 +377,13 @@ export default {
                   i.token.ticker = this.transactionData["token_metadata"].ticker;
                 } else {
                   i.token.isBurned = true;
+                  i.token.ticker = "<unknown>";
                 }
               } else {
                 i.token.isBurned = true;
+                i.token.ticker = "<unknown>";
               }
-              i.token.name = "<unknown>";
-              i.token.ticker = "<unknown>";
+
             }
           }
         });
