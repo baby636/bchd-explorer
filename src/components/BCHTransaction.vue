@@ -21,6 +21,38 @@
         <th colspan="2">{{transaction}}</th>
       </thead>
       <tbody>
+        <tr v-if="transactionData['slp_version_type'] > 0">
+          <td>SLP Validity</td>
+          <td>{{transactionData['slp_valid'] ? "Valid" : "Invalid"}}</td>
+        </tr>
+        <tr v-if="transactionData['slp_version_type'] > 0">
+          <td>SLP Version/Type</td>
+          <td>{{transactionData['slp_version_type_str']}}</td>
+        </tr>
+        <tr v-if="transactionData['token_metadata']">
+          <td>SLP Token Name</td>
+          <td>{{transactionData['token_metadata'].name}}</td>
+        </tr>
+        <tr v-if="transactionData['token_metadata']">
+          <td>SLP Token Ticker</td>
+          <td>{{transactionData['token_metadata'].ticker}}</td>
+        </tr>
+        <tr v-if="transactionData['token_metadata']">
+          <td>SLP Token ID</td>
+          <td>{{transactionData['token_metadata'].token_id}}</td>
+        </tr>
+        <tr v-if="transactionData['slp_version_type'] === 1">
+          <td>SLP Version/Type</td>
+          <td>{{transactionData['slp_parse_error']}}</td>
+        </tr>
+        <tr v-if="transactionData['slp_version_type'] === 1">
+          <td>SLP Parsing Error</td>
+          <td>{{transactionData['slp_parse_error']}}</td>
+        </tr>
+        <tr v-if="transactionData['token_metadata'] && [10,11].includes(transactionData['slp_version_type'])">
+          <td>SLP Group ID</td>
+          <td>{{transactionData['token_metadata'].nft_group_id}}</td>
+        </tr>
         <tr>
           <td>Version</td>
           <td>{{transactionData['version']}}</td>
@@ -62,6 +94,15 @@
         <tr>
           <td>Index</td>
           <td>{{item.getIndex()}}</td>
+        </tr>
+        <tr v-if="item.token">
+          <td>SLP Token</td>
+          <td v-if="!item.token.isBurned">{{item.token.isMintBaton ? "MINT BATON": item.token.amount}} {{item.token.isMintBaton ? "" : item.token.ticker}}</td>
+          <td v-else>{{item.token.isMintBaton ? "MINT BATON": item.token.amount}} {{item.token.ticker}} BURNED</td>
+        </tr>
+        <tr v-if="item.token && item.token.isBurned">
+          <td>SLP Token ID Burned</td>
+          <td>{{item.token.token_id}}</td>
         </tr>
         <tr>
           <td>Outpoint Hash</td>
@@ -105,8 +146,12 @@
           <td>Index</td>
           <td>{{item.getIndex()}}</td>
         </tr>
+        <tr v-if="item.token">
+          <td>SLP Token</td>
+          <td>{{item.token.isMintBaton ? "MINT BATON" : item.token.amount}} {{item.token.isMintBaton ? "" : transactionData.token_metadata.ticker}}</td>
+        </tr>
         <tr>
-          <td>Value</td>
+          <td>BCH Satoshis</td>
           <td>{{item.getValue()}}</td>
         </tr>
         <tr>

@@ -74,7 +74,7 @@ const MAINNET = "mainnet";
 
 // These can be changed to any BCHD gRPC endpoint.
 // The ones below are the default values in grpc-bchrpc-web.
-const MAINNET_URL = "https://bchd.ny1.simpleledger.io";
+const MAINNET_URL = "https://bchd.ny1.simpleledger.io"; //"https://bchd.greyh.at:8335";
 const TESTNET_URL = "https://bchd-testnet.greyh.at:18335";
 
 export default {
@@ -303,7 +303,8 @@ export default {
       try {
         var txResult = await this.grpc.getTransaction({
           hash: input,
-          reversedHashOrder: true
+          reversedHashOrder: true,
+          includeTokenMetadata: true
         });
         this.transaction = input;
         var tx = txResult.getTransaction();
@@ -318,7 +319,73 @@ export default {
         );
         this.transactionData["inputs"] = tx.getInputsList();
         this.transactionData["outputs"] = tx.getOutputsList();
-
+        this.transactionData["outputs"].forEach((o) => {
+          o.token = undefined;
+          if (o.getSlpToken()) {
+            let tok = o.getSlpToken();
+            if (tok) {
+              o.token = {};
+              o.token.amount = Big(tok.getAmount()).div(10**tok.getDecimals());
+              o.token.isMintBaton = tok.getIsMintBaton();
+              o.token.decimals = tok.getDecimals();
+              o.token.address = tok.getAddress();
+            }
+          }
+        });
+        this.transactionData["slp_version_type"] = tx.getSlpTransactionInfo().getVersionType();
+        this.transactionData["slp_version_type_str"] = this.mapSlpTransactionTypeString(this.transactionData["slp_version_type"]);
+        this.transactionData["slp_valid"] = tx.getSlpTransactionInfo().getValidityJudgement();
+        if (this.transactionData["slp_valid"]) {
+          const tm = txResult.getTokenMetadata();
+          const _id = Buffer.from(tm.getTokenId_asU8()).toString("hex");
+          const _tmObj = { token_id: _id, name: "", ticker: ""};
+          if (tm.hasType1()) {
+            _tmObj.name = Buffer.from(tm.getType1().getTokenName()).toString("utf8");
+            _tmObj.ticker = Buffer.from(tm.getType1().getTokenTicker()).toString("utf8");
+          } else if (tm.hasNft1Group()) {
+            _tmObj.name = Buffer.from(tm.getNft1Group().getTokenName()).toString("utf8");
+            _tmObj.ticker = Buffer.from(tm.getNft1Group().getTokenTicker()).toString("utf8");
+          } else if (tm.hasNft1Child()) {
+            _tmObj.name = Buffer.from(tm.getNft1Child().getTokenName()).toString("utf8");
+            _tmObj.ticker = Buffer.from(tm.getNft1Child().getTokenTicker()).toString("utf8");
+            _tmObj.nft_group_id = Buffer.from(tm.getNft1Child().getGroupId()).toString("hex");
+          }
+          if (_tmObj.name === "") {
+            _tmObj.name = "<none>";
+          }
+          if (_tmObj.ticker === "") {
+            _tmObj.ticker = "<none>";
+          }
+          this.transactionData["token_metadata"] = _tmObj;
+        } else if (this.transactionData["slp_version_type"] > 0) {
+          if (tx.getSlpTransactionInfo().getVersionType() === 2) {
+            this.transactionData["slp_parse_error"] = tx.getSlpTransactionInfo().getParseError();
+          }
+        }
+        this.transactionData["inputs"].forEach((i) => {
+          i.token = undefined;
+          if (i.getSlpToken()) {
+            let tok = i.getSlpToken();
+            if (tok) {
+              i.token = {};
+              i.token.amount = Big(tok.getAmount()).div(10**tok.getDecimals());
+              i.token.isMintBaton = tok.getIsMintBaton();
+              i.token.decimals = tok.getDecimals();
+              i.token.token_id = Buffer.from(tok.getTokenId_asU8()).toString("hex");
+              if (this.transactionData["token_metadata"]) {
+                if (i.token.token_id === this.transactionData["token_metadata"].token_id) {
+                  i.token.ticker = this.transactionData["token_metadata"].ticker;
+                } else {
+                  i.token.isBurned = true;
+                }
+              } else {
+                i.token.isBurned = true;
+              }
+              i.token.name = "<unknown>";
+              i.token.ticker = "<unknown>";
+            }
+          }
+        });
         return true;
       } catch (error) {
         return false;
@@ -371,7 +438,12 @@ export default {
         block_height: 0,
         block_hash: "",
         inputs: [],
-        outputs: []
+        outputs: [],
+        token_metadata: undefined,
+        slp_version_type: 0,
+        slp_version_type_str: "",
+        slp_valid: false,
+        slp_parse_error: ""
       };
     },
     updateNetwork: function() {
@@ -401,6 +473,36 @@ export default {
       })
         .reverse()
         .join("");
+    },
+    mapSlpTransactionTypeString: function(type) {
+      switch (type) {
+        case 0:
+          return "NON_SLP";
+        case 1:
+          return "NON_SLP_BURN";
+        case 2:
+          return "SLP_PARSE_ERROR";
+        case 3:
+          return "SLP_UNSUPPORTED_VERSION";
+        case 4:
+          return "SLP_V1_GENESIS";
+        case 5:
+          return "SLP_V1_MINT";
+        case 6:
+          return "SLP_V1_SEND";
+        case 7:
+          return "SLP_NFT1_GROUP_GENESIS";
+        case 8:
+          return "SLP_NFT1_GROUP_MINT";
+        case 9:
+          return "SLP_NFT1_GROUP_SEND";
+        case 10:
+          return "SLP_NFT1_UNIQUE_CHILD_GENESIS";
+        case 11:
+          return "SLP_NFT1_UNIQUE_CHILD_SEND";
+        default:
+          return "unknown type";
+      }
     }
   },
   created: function() {
