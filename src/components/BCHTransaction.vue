@@ -33,17 +33,17 @@
           <td>SLP Error Type</td>
           <td>{{transactionData['slp_version_type_str']}}</td>
         </tr>
-        <tr v-if="[1,2].includes(transactionData['slp_version_type'])">
+        <tr v-if="transactionData['slp_version_type'] === 2">
           <td>SLP Parser Error</td>
           <td>{{transactionData['slp_parse_error']}}</td>
+        </tr>
+        <tr v-else-if="transactionData['slp_version_type'] > 2 && !transactionData['slp_valid']">
+          <td>SLP Error</td>
+          <td>Insufficient inputs</td>
         </tr>
         <tr v-if="transactionData['token_metadata']">
           <td>SLP Token Name</td>
           <td>{{transactionData['token_metadata'].name}}</td>
-        </tr>
-        <tr v-if="transactionData['token_metadata']">
-          <td>SLP Token Ticker</td>
-          <td>{{transactionData['token_metadata'].ticker}}</td>
         </tr>
         <tr v-if="transactionData['token_metadata']">
           <td>SLP Token ID</td>

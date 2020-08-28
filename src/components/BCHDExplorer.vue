@@ -319,6 +319,14 @@ export default {
         );
         this.transactionData["inputs"] = tx.getInputsList();
         this.transactionData["outputs"] = tx.getOutputsList();
+
+        // set some slp properties
+        this.transactionData["slp_version_type"] = tx.getSlpTransactionInfo().getVersionType();
+        this.transactionData["slp_version_type_str"] = this.mapSlpTransactionTypeString(this.transactionData["slp_version_type"]);
+        this.transactionData["slp_valid"] = tx.getSlpTransactionInfo().getValidityJudgement();
+        this.transactionData["slp_parse_error"] = tx.getSlpTransactionInfo().getParseError();
+
+        // loop through txn outputs set view data for slp tokens
         this.transactionData["outputs"].forEach((o) => {
           o.token = undefined;
           if (o.getSlpToken()) {
@@ -332,9 +340,8 @@ export default {
             }
           }
         });
-        this.transactionData["slp_version_type"] = tx.getSlpTransactionInfo().getVersionType();
-        this.transactionData["slp_version_type_str"] = this.mapSlpTransactionTypeString(this.transactionData["slp_version_type"]);
-        this.transactionData["slp_valid"] = tx.getSlpTransactionInfo().getValidityJudgement();
+
+        // set token metadata for valid slp transaction
         if (this.transactionData["slp_valid"]) {
           const tm = txResult.getTokenMetadata();
           const _id = Buffer.from(tm.getTokenId_asU8()).toString("hex");
@@ -351,17 +358,44 @@ export default {
             _tmObj.nft_group_id = Buffer.from(tm.getNft1Child().getGroupId()).toString("hex");
           }
           if (_tmObj.name === "") {
-            _tmObj.name = "<none>";
+            _tmObj.name = "NA";
           }
           if (_tmObj.ticker === "") {
-            _tmObj.ticker = "<none>";
+            _tmObj.ticker = "tokens";
           }
           this.transactionData["token_metadata"] = _tmObj;
-        } else if (this.transactionData["slp_version_type"] > 0) {
-          if (tx.getSlpTransactionInfo().getVersionType() === 2) {
-            this.transactionData["slp_parse_error"] = tx.getSlpTransactionInfo().getParseError();
+        }
+
+        // loop through inputs to find all tokens IDs involved in input burns, then fetch token metadata
+        const burnedTokens = new Map();
+        this.transactionData["inputs"].forEach((i) => {
+          if (i.getSlpToken()) {
+            const tok = i.getSlpToken();
+            const tokenId = Buffer.from(tok.getTokenId_asU8()).toString("hex");
+            if (this.transactionData["token_metadata"]) {
+              if (tokenId !== this.transactionData["token_metadata"].token_id) {
+                burnedTokens.set(tokenId, {});
+              }
+            }
+          }
+        });
+        if (burnedTokens.size > 0) {
+          const _tm = await this.grpc.getTokenMetadata(Array.from(burnedTokens).map(i => i[0]));
+          for (const m of _tm.getTokenMetadataList()) {
+            const tokenId = Buffer.from(m.getTokenId_asU8()).toString("hex");
+            let ticker = `tokens (ID: ${tokenId.slice(0,5)})`;
+            if (m.getType1().getTokenTicker()) {
+              ticker = Buffer.from(m.getType1().getTokenTicker()).toString("utf8");
+            } else if (m.getNft1Group().getTokenTicker()) {
+              ticker = Buffer.from(m.getNft1Group().getTokenTicker()).toString("utf8");
+            } else if (m.hasNft1Child().getTokenTicker()) {
+              ticker = Buffer.from(m.getNft1Child().getTokenTicker()).toString("utf8");
+            }
+            burnedTokens.set(tokenId, { tokenId, ticker });
           }
         }
+
+        // loop through txn inputs to populate slp token view data
         this.transactionData["inputs"].forEach((i) => {
           i.token = undefined;
           if (i.getSlpToken()) {
@@ -372,18 +406,12 @@ export default {
               i.token.isMintBaton = tok.getIsMintBaton();
               i.token.decimals = tok.getDecimals();
               i.token.token_id = Buffer.from(tok.getTokenId_asU8()).toString("hex");
-              if (this.transactionData["token_metadata"]) {
-                if (i.token.token_id === this.transactionData["token_metadata"].token_id) {
-                  i.token.ticker = this.transactionData["token_metadata"].ticker;
-                } else {
+              if (burnedTokens.has(i.token.token_id)) {
                   i.token.isBurned = true;
-                  i.token.ticker = "<unknown>";
-                }
-              } else {
-                i.token.isBurned = true;
-                i.token.ticker = "<unknown>";
+                  i.token.ticker = burnedTokens.get(i.token.token_id).ticker;
+              } else if (i.token.token_id === this.transactionData["token_metadata"].token_id) {
+                  i.token.ticker = this.transactionData["token_metadata"].ticker;
               }
-
             }
           }
         });
