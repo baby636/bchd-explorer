@@ -220,12 +220,23 @@ export default {
           if (tm.hasType1()) {
             _tmObj.name = Buffer.from(tm.getType1().getTokenName()).toString("utf8");
             _tmObj.ticker = Buffer.from(tm.getType1().getTokenTicker()).toString("utf8");
+            _tmObj.document_url = tm.getType1().getTokenDocumentUrl_asB64() ? Buffer.from(tm.getType1().getTokenDocumentUrl_asU8()).toString("utf8") : "NA";
+            _tmObj.document_hash = tm.getType1().getTokenDocumentHash_asB64() ? Buffer.from(tm.getType1().getTokenDocumentHash_asU8()).toString("utf8") : "NA";
+            _tmObj.mint_baton_txid = Buffer.from(tm.getType1().getMintBatonTxid_asU8().slice().reverse()).toString("hex");
+            _tmObj.mint_baton_vout = tm.getType1().getMintBatonVout();
           } else if (tm.hasNft1Group()) {
             _tmObj.name = Buffer.from(tm.getNft1Group().getTokenName()).toString("utf8");
             _tmObj.ticker = Buffer.from(tm.getNft1Group().getTokenTicker()).toString("utf8");
+            _tmObj.document_url = tm.getNft1Group().getTokenDocumentUrl_asB64() ? Buffer.from(tm.getNft1Group().getTokenDocumentUrl_asU8()).toString("utf8") : "NA";
+            _tmObj.document_hash = tm.getNft1Group().getTokenDocumentHash_asB64() ? Buffer.from(tm.getNft1Group().getTokenDocumentHash_asU8()).toString("utf8") : "NA";
+            _tmObj.mint_baton_txid = Buffer.from(tm.getNft1Group().getMintBatonTxid_asU8().slice().reverse()).toString("hex");
+            _tmObj.mint_baton_vout = tm.getNft1Group().getMintBatonVout();
           } else if (tm.hasNft1Child()) {
             _tmObj.name = Buffer.from(tm.getNft1Child().getTokenName()).toString("utf8");
             _tmObj.ticker = Buffer.from(tm.getNft1Child().getTokenTicker()).toString("utf8");
+            _tmObj.document_url = tm.getNft1Child().getTokenDocumentUrl_asB64() ? Buffer.from(tm.getNft1Child().getTokenDocumentUrl_asU8()).toString("utf8") : "NA";
+            _tmObj.document_hash = tm.getNft1Child().getTokenDocumentHash_asB64() ? Buffer.from(tm.getNft1Child().getTokenDocumentHash_asU8()).toString("utf8") : "NA";
+            _tmObj.nft_group_id = Buffer.from(tm.getNft1Child().getGroupId_asU8()).toString("hex");
           }
         });
         addrUtxoResult.getOutputsList().forEach(function(a) {
@@ -238,8 +249,7 @@ export default {
             } else {
               _tokens.set(tokenID, {
                 token_id: tokenID,
-                name: tokenMetadata.get(tokenID).name,
-                ticker: tokenMetadata.get(tokenID).ticker,
+                token_metadata: tokenMetadata.get(tokenID),
                 decimals: tok.getDecimals(),
                 balance: Big(tok.getAmount())
               });
