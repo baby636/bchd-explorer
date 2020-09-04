@@ -25,6 +25,10 @@
           <td>SLP Validity</td>
           <td>{{transactionData['slp_valid'] ? "Valid" : "Invalid"}}</td>
         </tr>
+        <tr v-if="transactionData['burn_flags']" style="color:red;">
+          <td>SLP Burns</td>
+          <td>{{transactionData['burn_flags']}}</td>
+        </tr>
         <tr v-if="transactionData['slp_version_type'] > 2">
           <td>SLP Type</td>
           <td>{{transactionData['slp_version_type_str']}}</td>
@@ -103,11 +107,11 @@
         <tr v-if="item.token">
           <td>SLP Token</td>
           <td v-if="!item.token.isBurned">{{item.token.isMintBaton ? "MINT BATON": item.token.amount}} {{item.token.isMintBaton ? "" : item.token.ticker}}</td>
-          <td v-else>{{item.token.isMintBaton ? "MINT BATON": item.token.amount}} {{item.token.ticker}} BURNED</td>
+          <td v-else style="color:red;">{{item.token.isMintBaton ? "MINT BATON": item.token.amount}} {{item.token.ticker}} BURNED</td>
         </tr>
         <tr v-if="item.token && item.token.isBurned">
           <td>SLP Token ID Burned</td>
-          <td>{{item.token.token_id}}</td>
+          <td style="color:red;">{{item.token.token_id}}</td>
         </tr>
         <tr>
           <td>Outpoint Hash</td>

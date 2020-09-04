@@ -13,7 +13,7 @@
     "bchaddrjs-slp": "^0.2.9",
     "core-js": "^3.6.5",
     "flush-promises": "^1.0.2",
-    "grpc-bchrpc-web": "^0.11.0",
+    "grpc-bchrpc-web": "^0.11.1",
     "jest": "^25.5.4",
     "pretty-bytes": "^5.3.0",
     "satoshi-bitcoin": "^1.0.4",

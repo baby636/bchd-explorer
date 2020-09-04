@@ -335,6 +335,7 @@ export default {
         this.transactionData["slp_version_type_str"] = this.mapSlpTransactionTypeString(this.transactionData["slp_version_type"]);
         this.transactionData["slp_valid"] = tx.getSlpTransactionInfo().getValidityJudgement();
         this.transactionData["slp_parse_error"] = tx.getSlpTransactionInfo().getParseError();
+        this.transactionData["burn_flags"] = this.mapBurnFlagToString(tx.getSlpTransactionInfo().getBurnFlagsList());
 
         // loop through txn outputs set view data for slp tokens
         this.transactionData["outputs"].forEach((o) => {
@@ -386,24 +387,28 @@ export default {
               if (tokenId !== this.transactionData["token_metadata"].token_id) {
                 burnedTokens.set(tokenId, {});
               }
+            } else {
+              burnedTokens.set(tokenId, {});
             }
           }
         });
-        if (burnedTokens.size > 0) {
-          const _tm = await this.grpc.getTokenMetadata(Array.from(burnedTokens).map(i => i[0]));
-          for (const m of _tm.getTokenMetadataList()) {
-            const tokenId = Buffer.from(m.getTokenId_asU8()).toString("hex");
-            let ticker = `tokens (ID: ${tokenId.slice(0,5)})`;
-            if (m.getType1().getTokenTicker()) {
-              ticker = Buffer.from(m.getType1().getTokenTicker()).toString("utf8");
-            } else if (m.getNft1Group().getTokenTicker()) {
-              ticker = Buffer.from(m.getNft1Group().getTokenTicker()).toString("utf8");
-            } else if (m.hasNft1Child().getTokenTicker()) {
-              ticker = Buffer.from(m.getNft1Child().getTokenTicker()).toString("utf8");
-            }
-            burnedTokens.set(tokenId, { tokenId, ticker });
-          }
-        }
+
+        // TODO: This causes burns inputs info to be missing when the async call is made.
+        // if (burnedTokens.size > 0) {
+        //   const _tm = await this.grpc.getTokenMetadata(Array.from(burnedTokens).map(i => i[0]));
+        //   for (const m of _tm.getTokenMetadataList()) {
+        //     const tokenId = Buffer.from(m.getTokenId_asU8()).toString("hex");
+        //     let ticker = `tokens (ID: ${tokenId.slice(0,5)})`;
+        //     if (m.getType1().getTokenTicker()) {
+        //       ticker = Buffer.from(m.getType1().getTokenTicker()).toString("utf8");
+        //     } else if (m.getNft1Group().getTokenTicker()) {
+        //       ticker = Buffer.from(m.getNft1Group().getTokenTicker()).toString("utf8");
+        //     } else if (m.hasNft1Child().getTokenTicker()) {
+        //       ticker = Buffer.from(m.getNft1Child().getTokenTicker()).toString("utf8");
+        //     }
+        //     burnedTokens.set(tokenId, { tokenId, ticker });
+        //   }
+        // }
 
         // loop through txn inputs to populate slp token view data
         this.transactionData["inputs"].forEach((i) => {
@@ -542,7 +547,32 @@ export default {
         default:
           return "unknown type";
       }
-    }
+    },
+    mapBurnFlagToString: function(flags) {
+      let flagStr = "";
+      flags.forEach((f) => {
+        switch(f) {
+          case 0:
+            flagStr = flagStr + "BURNED_INPUTS_OUTPUTS_TOO_HIGH\n";
+            break;
+          case 1:
+            flagStr = flagStr + "BURNED_INPUTS_BAD_OPRETURN\n";
+            break;
+          case 2:
+            flagStr = flagStr + "BURNED_INPUTS_OTHER_TOKEN\n";
+            break;
+          case 3:
+            flagStr = flagStr + "BURNED_OUTPUTS_MISSING_BCH_VOUT\n";
+            break;
+          case 4:
+            flagStr = flagStr + "BURNED_INPUTS_GREATER_THAN_OUTPUTS\n";
+            break;
+          default:
+            flagStr = flagStr + "unknown burn type\n"
+        }
+      });
+      return flagStr;
+    },
   },
   created: function() {
     if (this.getInfoBar) {
