@@ -377,23 +377,25 @@ export default {
           this.transactionData["token_metadata"] = _tmObj;
         }
 
-        // loop through inputs to find all tokens IDs involved in input burns, then fetch token metadata
-        const burnedTokens = new Map();
-        this.transactionData["inputs"].forEach((i) => {
-          if (i.getSlpToken()) {
-            const tok = i.getSlpToken();
-            const tokenId = Buffer.from(tok.getTokenId_asU8()).toString("hex");
-            if (this.transactionData["token_metadata"]) {
-              if (tokenId !== this.transactionData["token_metadata"].token_id) {
-                burnedTokens.set(tokenId, {});
-              }
-            } else {
-              burnedTokens.set(tokenId, {});
-            }
-          }
-        });
+        // loop through inputs to find all tokens IDs involved in input burns, so we can fetch token metadata
+        // const burnedTokens = new Map();
+        // this.transactionData["inputs"].forEach((i) => {
+        //   if (i.getSlpToken()) {
+        //     const tok = i.getSlpToken();
+        //     const tokenId = Buffer.from(tok.getTokenId_asU8()).toString("hex");
+        //     //const versionType = Buffer.from([tok.getVersionType()]).toString("hex");
+        //     //const burnId = tokenId + versionType;
+        //     if (this.transactionData["token_metadata"]) {
+        //       if (tokenId !== this.transactionData["token_metadata"].token_id || versionType !== this.transactionData["slp_version_type"]) {
+        //         burnedTokens.set(tokenId, {});
+        //       }
+        //     } else {
+        //       burnedTokens.set(tokenId, {});
+        //     }
+        //   }
+        // });
 
-        // TODO: This causes burns inputs info to be missing when the async call is made.
+        // TODO: The async call causes burns inputs info to be missing.
         // if (burnedTokens.size > 0) {
         //   const _tm = await this.grpc.getTokenMetadata(Array.from(burnedTokens).map(i => i[0]));
         //   for (const m of _tm.getTokenMetadataList()) {
@@ -421,9 +423,11 @@ export default {
               i.token.isMintBaton = tok.getIsMintBaton();
               i.token.decimals = tok.getDecimals();
               i.token.token_id = Buffer.from(tok.getTokenId_asU8()).toString("hex");
-              if (burnedTokens.has(i.token.token_id)) {
+              i.token.version_type = tok.getVersionType();
+              if (i.token.token_id !== this.transactionData["token_metadata"].token_id ||
+                i.token.version_type !== this.transactionData["slp_version_type"]) {
                   i.token.isBurned = true;
-                  i.token.ticker = burnedTokens.get(i.token.token_id).ticker;
+                  i.token.ticker = "";
               } else if (i.token.token_id === this.transactionData["token_metadata"].token_id) {
                   i.token.ticker = this.transactionData["token_metadata"].ticker;
               }
