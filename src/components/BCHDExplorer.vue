@@ -413,6 +413,7 @@ export default {
         // }
 
         // loop through txn inputs to populate slp token view data
+        const dat = this.transactionData;
         this.transactionData["inputs"].forEach((i) => {
           i.token = undefined;
           if (i.getSlpToken()) {
@@ -424,12 +425,17 @@ export default {
               i.token.decimals = tok.getDecimals();
               i.token.token_id = Buffer.from(tok.getTokenId_asU8()).toString("hex");
               i.token.version_type = tok.getVersionType();
-              if (i.token.token_id !== this.transactionData["token_metadata"].token_id ||
-                i.token.version_type !== this.transactionData["slp_version_type"]) {
+              if (dat.token_metadata) {
+                if (i.token.token_id !== dat.token_metadata.token_id || i.token.version_type !== dat.slp_version_type) {
                   i.token.isBurned = true;
                   i.token.ticker = "";
-              } else if (i.token.token_id === this.transactionData["token_metadata"].token_id) {
-                  i.token.ticker = this.transactionData["token_metadata"].ticker;
+                } else {
+                  i.token.ticker = dat["token_metadata"].ticker;
+                }
+              }
+              if (dat.burn_flags.includes("BURNED_INPUTS_OUTPUTS_TOO_HIGH") || dat.burn_flags.includes("BURNED_INPUTS_BAD_OPRETURN")) {
+                i.token.isBurned = true;
+                i.token.ticker = "";
               }
             }
           }
