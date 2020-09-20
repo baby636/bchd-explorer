@@ -23,7 +23,7 @@
         <label for="checkbox">Testnet</label>
       </div> -->
       <div class="container">
-        <img class="logo" src="../assets/bchd-explorer.svg" />
+        <img class="logo" src="../assets/slp-logo.svg" />
         <div class="field">
           <div class="control has-icons-left">
             <input
