@@ -25,10 +25,6 @@
           <td>SLP Validity</td>
           <td>{{transactionData['slp_valid'] ? "Valid" : "Invalid"}}</td>
         </tr>
-        <tr v-if="transactionData['burn_flags']" style="color:red;">
-          <td>SLP Burns</td>
-          <td>{{transactionData['burn_flags']}}</td>
-        </tr>
         <tr v-if="transactionData['slp_version_type'] > 2">
           <td>SLP Type</td>
           <td>{{transactionData['slp_version_type_str']}}</td>
@@ -37,11 +33,11 @@
           <td>SLP Error Type</td>
           <td>{{transactionData['slp_version_type_str']}}</td>
         </tr>
-        <tr v-if="transactionData['slp_version_type'] === 2">
+        <tr v-if="transactionData['slp_version_type'] === 2" style="color:red;">
           <td>SLP Parser Error</td>
           <td>{{transactionData['slp_parse_error']}}</td>
         </tr>
-        <tr v-else-if="transactionData['slp_version_type'] > 2 && !transactionData['slp_valid']">
+        <tr v-else-if="transactionData['slp_version_type'] > 2 && !transactionData['slp_valid']"  style="color:red;">
           <td>SLP Error</td>
           <td>Insufficient inputs</td>
         </tr>
@@ -52,6 +48,18 @@
         <tr v-if="transactionData['token_metadata']">
           <td>SLP Token ID</td>
           <td>{{transactionData['token_metadata'].token_id}}</td>
+        </tr>
+        <tr v-if="transactionData['burn_flags']" style="color:red;">
+          <td>SLP Burns</td>
+          <td>{{transactionData['burn_flags']}}</td>
+        </tr>
+        <tr v-if="transactionData['burn_amt_this_token']" style="color:red;">
+          <td>SLP Inputs Burned (this token)</td>
+          <td>{{`${transactionData['burn_amt_this_token']} ${transactionData.token_metadata.ticker}`}}</td>
+        </tr>
+        <tr v-if="transactionData['burns_from_other_tokens']" style="color:red;">
+          <td>SLP Inputs Burned (misc. tokens)</td>
+          <td>See inputs below</td>
         </tr>
         <tr v-if="transactionData['slp_version_type'] === 1">
           <td>SLP Parsing Error</td>

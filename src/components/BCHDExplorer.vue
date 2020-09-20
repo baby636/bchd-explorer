@@ -336,6 +336,8 @@ export default {
         this.transactionData["slp_valid"] = tx.getSlpTransactionInfo().getValidityJudgement();
         this.transactionData["slp_parse_error"] = tx.getSlpTransactionInfo().getParseError();
         this.transactionData["burn_flags"] = this.mapBurnFlagToString(tx.getSlpTransactionInfo().getBurnFlagsList());
+        const inputAmtMap = new Map();
+        let outputAmt = Big(0);
 
         // loop through txn outputs set view data for slp tokens
         this.transactionData["outputs"].forEach((o) => {
@@ -345,6 +347,7 @@ export default {
             if (tok) {
               o.token = {};
               o.token.amount = Big(tok.getAmount()).div(10**tok.getDecimals());
+              outputAmt = outputAmt.add(o.token.amount);
               o.token.isMintBaton = tok.getIsMintBaton();
               o.token.decimals = tok.getDecimals();
               o.token.address = tok.getAddress();
@@ -433,6 +436,16 @@ export default {
                   i.token.ticker = dat["token_metadata"].ticker;
                 }
               }
+
+              // enumerate inputs for displaying burn quantity
+              if (! inputAmtMap.has(i.token.token_id + i.token.version_type)) {
+                inputAmtMap.set(i.token.token_id + i.token.version_type, i.token.amount);
+              } else {
+                let totalAmt = inputAmtMap.get(i.token.token_id + i.token.version_type);
+                totalAmt = totalAmt.add(i.token.amount);
+                inputAmtMap.set(i.token.token_id + i.token.version_type, totalAmt);
+              }
+
               if (dat.burn_flags.includes("BURNED_INPUTS_OUTPUTS_TOO_HIGH") || dat.burn_flags.includes("BURNED_INPUTS_BAD_OPRETURN")) {
                 i.token.isBurned = true;
                 i.token.ticker = "";
@@ -440,6 +453,23 @@ export default {
             }
           }
         });
+
+        // set burned amount to display
+        if (dat.token_metadata) {
+          for (const amt of inputAmtMap) {
+            if (amt[0] === dat.token_metadata.token_id + dat.slp_version_type) {
+              amt[1] = amt[1].sub(outputAmt);
+              if (amt[1].gt(0)) {
+                dat.burn_amt_this_token = amt[1].toFixed();
+              }
+            } else {
+              dat.burns_from_other_tokens = true;
+            }
+          }
+        } else if (inputAmtMap.size > 0) {
+          dat.burns_from_other_tokens = true;
+        }
+
         return true;
       } catch (error) {
         return false;
