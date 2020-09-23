@@ -21,23 +21,23 @@
         <th colspan="2">{{transaction}}</th>
       </thead>
       <tbody>
-        <tr v-if="transactionData['slp_version_type'] > 0">
+        <tr v-if="transactionData['slp_action'] > 0">
           <td>SLP Validity</td>
           <td>{{transactionData['slp_valid'] ? "Valid" : "Invalid"}}</td>
         </tr>
-        <tr v-if="transactionData['slp_version_type'] > 2">
+        <tr v-if="transactionData['slp_action'] > 2">
           <td>SLP Type</td>
-          <td>{{transactionData['slp_version_type_str']}}</td>
+          <td>{{transactionData['slp_action_str']}}</td>
         </tr>
-        <tr v-if="[1,2].includes(transactionData['slp_version_type'])">
+        <tr v-if="[1,2].includes(transactionData['slp_action'])">
           <td>SLP Error Type</td>
-          <td>{{transactionData['slp_version_type_str']}}</td>
+          <td>{{transactionData['slp_action_str']}}</td>
         </tr>
-        <tr v-if="transactionData['slp_version_type'] === 2" style="color:red;">
+        <tr v-if="transactionData['slp_action'] === 2" style="color:red;">
           <td>SLP Parser Error</td>
           <td>{{transactionData['slp_parse_error']}}</td>
         </tr>
-        <tr v-else-if="transactionData['slp_version_type'] > 2 && !transactionData['slp_valid']"  style="color:red;">
+        <tr v-else-if="transactionData['slp_action'] > 2 && !transactionData['slp_valid']"  style="color:red;">
           <td>SLP Error</td>
           <td>Insufficient inputs</td>
         </tr>
@@ -61,11 +61,11 @@
           <td>SLP Inputs Burned (misc. tokens)</td>
           <td>See inputs below</td>
         </tr>
-        <tr v-if="transactionData['slp_version_type'] === 1">
+        <tr v-if="transactionData['slp_action'] === 1">
           <td>SLP Parsing Error</td>
           <td>{{transactionData['slp_parse_error']}}</td>
         </tr>
-        <tr v-if="transactionData['token_metadata'] && [10,11].includes(transactionData['slp_version_type'])">
+        <tr v-if="transactionData['token_metadata'] && [10,11].includes(transactionData['slp_action'])">
           <td>SLP Group ID</td>
           <td>{{transactionData['token_metadata'].nft_group_id}}</td>
         </tr>

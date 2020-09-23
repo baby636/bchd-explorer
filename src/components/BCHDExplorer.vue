@@ -331,8 +331,8 @@ export default {
         this.transactionData["outputs"] = tx.getOutputsList();
 
         // set some slp properties
-        this.transactionData["slp_version_type"] = tx.getSlpTransactionInfo().getVersionType();
-        this.transactionData["slp_version_type_str"] = this.mapSlpTransactionTypeString(this.transactionData["slp_version_type"]);
+        this.transactionData["slp_action"] = tx.getSlpTransactionInfo().getSlpAction();
+        this.transactionData["slp_action_str"] = this.mapSlpTransactionTypeString(this.transactionData["slp_action"]);
         this.transactionData["slp_valid"] = tx.getSlpTransactionInfo().getValidityJudgement();
         this.transactionData["slp_parse_error"] = tx.getSlpTransactionInfo().getParseError();
         this.transactionData["burn_flags"] = this.mapBurnFlagToString(tx.getSlpTransactionInfo().getBurnFlagsList());
@@ -360,6 +360,7 @@ export default {
           const tm = txResult.getTokenMetadata();
           const _id = Buffer.from(tm.getTokenId_asU8()).toString("hex");
           const _tmObj = { token_id: _id, name: "", ticker: ""};
+          _tmObj.token_type = tm.getTokenType();
           if (tm.hasType1()) {
             _tmObj.name = Buffer.from(tm.getType1().getTokenName()).toString("utf8");
             _tmObj.ticker = Buffer.from(tm.getType1().getTokenTicker()).toString("utf8");
@@ -389,7 +390,7 @@ export default {
         //     //const versionType = Buffer.from([tok.getVersionType()]).toString("hex");
         //     //const burnId = tokenId + versionType;
         //     if (this.transactionData["token_metadata"]) {
-        //       if (tokenId !== this.transactionData["token_metadata"].token_id || versionType !== this.transactionData["slp_version_type"]) {
+        //       if (tokenId !== this.transactionData["token_metadata"].token_id || versionType !== this.transactionData["slp_action"]) {
         //         burnedTokens.set(tokenId, {});
         //       }
         //     } else {
@@ -427,9 +428,10 @@ export default {
               i.token.isMintBaton = tok.getIsMintBaton();
               i.token.decimals = tok.getDecimals();
               i.token.token_id = Buffer.from(tok.getTokenId_asU8()).toString("hex");
-              i.token.version_type = tok.getVersionType();
+              i.token.slp_action = tok.getSlpAction();
+              i.token.token_type = tok.getTokenType();
               if (dat.token_metadata) {
-                if (i.token.token_id !== dat.token_metadata.token_id || i.token.version_type !== dat.slp_version_type) {
+                if (i.token.token_id !== dat.token_metadata.token_id || i.token.token_type !== dat.token_metadata.token_type) {
                   i.token.isBurned = true;
                   i.token.ticker = "";
                 } else {
@@ -438,12 +440,12 @@ export default {
               }
 
               // enumerate inputs for displaying burn quantity
-              if (! inputAmtMap.has(i.token.token_id + i.token.version_type)) {
-                inputAmtMap.set(i.token.token_id + i.token.version_type, i.token.amount);
+              if (! inputAmtMap.has(i.token.token_id + i.token.token_type)) {
+                inputAmtMap.set(i.token.token_id + i.token.token_type, i.token.amount);
               } else {
-                let totalAmt = inputAmtMap.get(i.token.token_id + i.token.version_type);
+                let totalAmt = inputAmtMap.get(i.token.token_id + i.token.token_type);
                 totalAmt = totalAmt.add(i.token.amount);
-                inputAmtMap.set(i.token.token_id + i.token.version_type, totalAmt);
+                inputAmtMap.set(i.token.token_id + i.token.token_type, totalAmt);
               }
 
               if (dat.burn_flags.includes("BURNED_INPUTS_OUTPUTS_TOO_HIGH") || dat.burn_flags.includes("BURNED_INPUTS_BAD_OPRETURN")) {
@@ -457,7 +459,7 @@ export default {
         // set burned amount to display
         if (dat.token_metadata) {
           for (const amt of inputAmtMap) {
-            if (amt[0] === dat.token_metadata.token_id + dat.slp_version_type) {
+            if (amt[0] === dat.token_metadata.token_id + dat.token_metadata.token_type) {
               amt[1] = amt[1].sub(outputAmt);
               if (amt[1].gt(0)) {
                 dat.burn_amt_this_token = amt[1].toFixed();
@@ -524,8 +526,8 @@ export default {
         inputs: [],
         outputs: [],
         token_metadata: undefined,
-        slp_version_type: 0,
-        slp_version_type_str: "",
+        slp_action: 0,
+        slp_action_str: "",
         slp_valid: false,
         slp_parse_error: ""
       };
