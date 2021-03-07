@@ -17,11 +17,13 @@
 <template>
   <div class="explorer">
     <section class="section">
-      <!-- <div class="container has-text-right">
-        <input type="checkbox" id="checkbox" v-model="testnet" v-on:change="updateNetwork()" />
-        &nbsp;
-        <label for="checkbox">Testnet</label>
-      </div> -->
+      <div class="container has-text-right">
+        <select v-model="selectedNetwork" @change="updateNetwork">
+          <option v-for="network in networks" :value="network.url" :key="network.url">
+            {{ network.url }}
+          </option>
+        </select>
+      </div>
       <div class="container">
         <img class="logo" src="../assets/slp-logo.svg" />
         <div class="field">
@@ -72,11 +74,6 @@ import prettyBytes from "pretty-bytes";
 const TESTNET = "testnet";
 const MAINNET = "mainnet";
 
-// These can be changed to any BCHD gRPC endpoint.
-// The ones below are the default values in grpc-bchrpc-web.
-const MAINNET_URL = "https://bchd.ny1.simpleledger.io"; //"https://bchd.greyh.at:8335";
-const TESTNET_URL = "https://bchd-testnet.greyh.at:18335";
-
 export default {
   name: "explorer",
   components: {
@@ -97,7 +94,14 @@ export default {
       transactionData: this.defaultTransactionData(),
       block: "",
       blockData: this.defaultBlockData(),
-      getInfoBar: true
+      getInfoBar: true,
+      networks: [
+        { url: "https://bchd.ny1.simpleledger.io"},
+        { url: "https://bchd.nl1.simpleledger.io"},
+        { url: "https://bchd.fountainhead.cash"},
+        { url: "https://localhost:8335"}
+      ],
+      selectedNetwork: "https://bchd.ny1.simpleledger.io"
     };
   },
   mounted() {
@@ -479,6 +483,7 @@ export default {
     },
     resetState: function() {
       this.result = "";
+      this.infoResult = "Not connected (select another server)";
       this.address = "";
       this.addressData = this.defaultAddressData();
       this.block = "";
@@ -533,13 +538,15 @@ export default {
       };
     },
     updateNetwork: function() {
+      this.resetState();
+      this.grpc = null;
       this.grpc = this.newGrpcClient();
       this.getInfo();
     },
     newGrpcClient: function() {
       return new GrpcClient({
-        url: this.testnet ? TESTNET_URL : MAINNET_URL,
-        testnet: this.testnet
+        url: this.selectedNetwork,
+        testnet: false
       });
     },
     getInfo: async function() {
