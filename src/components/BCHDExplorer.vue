@@ -483,7 +483,6 @@ export default {
     },
     resetState: function() {
       this.result = "";
-      this.infoResult = "Not connected (select another server)";
       this.address = "";
       this.addressData = this.defaultAddressData();
       this.block = "";
@@ -539,6 +538,7 @@ export default {
     },
     updateNetwork: function() {
       this.resetState();
+      this.infoResult = "Not connected (select another server)";
       this.grpc = null;
       this.grpc = this.newGrpcClient();
       this.getInfo();
