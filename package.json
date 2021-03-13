@@ -14,7 +14,7 @@
     "big.js": "^5.2.2",
     "core-js": "^3.6.5",
     "flush-promises": "^1.0.2",
-    "grpc-bchrpc-web": "^0.12.0",
+    "grpc-bchrpc-web": "^0.15.0",
     "jest": "^25.5.4",
     "pretty-bytes": "^5.4.1",
     "satoshi-bitcoin": "^1.0.4",
@@ -42,7 +42,9 @@
       "plugin:vue/essential",
       "eslint:recommended"
     ],
-    "rules": {},
+    "rules": {
+      "no-console": "off"
+    },
     "parserOptions": {
       "parser": "babel-eslint"
     },

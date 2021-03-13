@@ -221,26 +221,26 @@ export default {
           const _id = Buffer.from(tm.getTokenId_asU8()).toString("hex");
           const _tmObj = { token_id: _id, name: "", ticker: "" };
           tokenMetadata.set(_id, _tmObj);
-          if (tm.hasType1()) {
-            _tmObj.name = Buffer.from(tm.getType1().getTokenName()).toString("utf8");
-            _tmObj.ticker = Buffer.from(tm.getType1().getTokenTicker()).toString("utf8");
-            _tmObj.document_url = tm.getType1().getTokenDocumentUrl_asB64() ? Buffer.from(tm.getType1().getTokenDocumentUrl_asU8()).toString("utf8") : "NA";
-            _tmObj.document_hash = tm.getType1().getTokenDocumentHash_asB64() ? Buffer.from(tm.getType1().getTokenDocumentHash_asU8()).toString("utf8") : "NA";
-            _tmObj.mint_baton_txid = Buffer.from(tm.getType1().getMintBatonTxid_asU8().slice().reverse()).toString("hex");
-            _tmObj.mint_baton_vout = tm.getType1().getMintBatonVout();
-          } else if (tm.hasNft1Group()) {
-            _tmObj.name = Buffer.from(tm.getNft1Group().getTokenName()).toString("utf8");
-            _tmObj.ticker = Buffer.from(tm.getNft1Group().getTokenTicker()).toString("utf8");
-            _tmObj.document_url = tm.getNft1Group().getTokenDocumentUrl_asB64() ? Buffer.from(tm.getNft1Group().getTokenDocumentUrl_asU8()).toString("utf8") : "NA";
-            _tmObj.document_hash = tm.getNft1Group().getTokenDocumentHash_asB64() ? Buffer.from(tm.getNft1Group().getTokenDocumentHash_asU8()).toString("utf8") : "NA";
-            _tmObj.mint_baton_txid = Buffer.from(tm.getNft1Group().getMintBatonTxid_asU8().slice().reverse()).toString("hex");
-            _tmObj.mint_baton_vout = tm.getNft1Group().getMintBatonVout();
-          } else if (tm.hasNft1Child()) {
-            _tmObj.name = Buffer.from(tm.getNft1Child().getTokenName()).toString("utf8");
-            _tmObj.ticker = Buffer.from(tm.getNft1Child().getTokenTicker()).toString("utf8");
-            _tmObj.document_url = tm.getNft1Child().getTokenDocumentUrl_asB64() ? Buffer.from(tm.getNft1Child().getTokenDocumentUrl_asU8()).toString("utf8") : "NA";
-            _tmObj.document_hash = tm.getNft1Child().getTokenDocumentHash_asB64() ? Buffer.from(tm.getNft1Child().getTokenDocumentHash_asU8()).toString("utf8") : "NA";
-            _tmObj.nft_group_id = Buffer.from(tm.getNft1Child().getGroupId_asU8()).toString("hex");
+          if (tm.hasV1Fungible()) {
+            _tmObj.name = tm.getV1Fungible().getTokenName();
+            _tmObj.ticker = Buffer.from(tm.getV1Fungible().getTokenTicker()).toString("utf8");
+            _tmObj.document_url = tm.getV1Fungible().getTokenDocumentUrl() !== "" ? tm.getV1Fungible().getTokenDocumentUrl() : "NA";
+            _tmObj.document_hash = tm.getV1Fungible().getTokenDocumentHash() !== "" ? tm.getV1Fungible().getTokenDocumentHash() : "NA";
+            _tmObj.mint_baton_txid = Buffer.from(tm.getV1Fungible().getMintBatonHash_asU8().slice().reverse()).toString("hex");
+            _tmObj.mint_baton_vout = tm.getV1Fungible().getMintBatonVout();
+          } else if (tm.hasV1Nft1Group()) {
+            _tmObj.name = tm.getV1Nft1Group().getTokenName();
+            _tmObj.ticker = tm.getV1Nft1Group().getTokenTicker();
+            _tmObj.document_url = tm.getV1Nft1Group().getTokenDocumentUrl() !== "" ? tm.getV1Nft1Group().getTokenDocumentUrl() : "NA";
+            _tmObj.document_hash = tm.getV1Nft1Group().getTokenDocumentHash_asB64() ? tm.getV1Nft1Group().getTokenDocumentHash() : "NA";
+            _tmObj.mint_baton_txid = Buffer.from(tm.getV1Nft1Group().getMintBatonHash_asU8().slice().reverse()).toString("hex");
+            _tmObj.mint_baton_vout = tm.getV1Nft1Group().getMintBatonVout();
+          } else if (tm.hasV1Nft1Child()) {
+            _tmObj.name = tm.getV1Nft1Child().getTokenName();
+            _tmObj.ticker = tm.getV1Nft1Child().getTokenTicker();
+            _tmObj.document_url = tm.getV1Nft1Child().getTokenDocumentUrl() !== "" ? tm.getV1Nft1Child().getTokenDocumentUrl() : "NA";
+            _tmObj.document_hash = tm.getV1Nft1Child().getTokenDocumentHash_asB64() ? Buffer.from(tm.getV1Nft1Child().getTokenDocumentHash_asU8()).toString("utf8") : "NA";
+            _tmObj.nft_group_id = Buffer.from(tm.getV1Nft1Child().getGroupId_asU8()).toString("hex");
           }
         });
         addrUtxoResult.getOutputsList().forEach(function(a) {
@@ -340,6 +340,14 @@ export default {
         this.transactionData["slp_valid"] = tx.getSlpTransactionInfo().getValidityJudgement();
         this.transactionData["slp_parse_error"] = tx.getSlpTransactionInfo().getParseError();
         this.transactionData["burn_flags"] = this.mapBurnFlagToString(tx.getSlpTransactionInfo().getBurnFlagsList());
+
+        // // set slp group id
+        // if (tx.getSlpTransactionInfo().hasV1Nft1ChildGenesis()) {
+        //   this.transactionData["slp_group_id"] = Buffer.from(tx.getSlpTransactionInfo().getV1Nft1ChildGenesis().getGroupTokenId_asU8()).toString("hex");
+        // } else if (tx.getSlpTransactionInfo().hasNft1ChildSend()) {
+        //   this.transactionData["slp_group_id"] = Buffer.from(tx.getSlpTransactionInfo().getV1Nft1ChildSend().getGroupTokenId_asU8()).toString("hex");
+        // }
+        
         const inputAmtMap = new Map();
         let outputAmt = Big(0);
 
@@ -365,16 +373,16 @@ export default {
           const _id = Buffer.from(tm.getTokenId_asU8()).toString("hex");
           const _tmObj = { token_id: _id, name: "", ticker: ""};
           _tmObj.token_type = tm.getTokenType();
-          if (tm.hasType1()) {
-            _tmObj.name = Buffer.from(tm.getType1().getTokenName()).toString("utf8");
-            _tmObj.ticker = Buffer.from(tm.getType1().getTokenTicker()).toString("utf8");
-          } else if (tm.hasNft1Group()) {
-            _tmObj.name = Buffer.from(tm.getNft1Group().getTokenName()).toString("utf8");
-            _tmObj.ticker = Buffer.from(tm.getNft1Group().getTokenTicker()).toString("utf8");
-          } else if (tm.hasNft1Child()) {
-            _tmObj.name = Buffer.from(tm.getNft1Child().getTokenName()).toString("utf8");
-            _tmObj.ticker = Buffer.from(tm.getNft1Child().getTokenTicker()).toString("utf8");
-            _tmObj.nft_group_id = Buffer.from(tm.getNft1Child().getGroupId()).toString("hex");
+          if (tm.hasV1Fungible()) {
+            _tmObj.name = tm.getV1Fungible().getTokenName();
+            _tmObj.ticker = tm.getV1Fungible().getTokenTicker();
+          } else if (tm.hasV1Nft1Group()) {
+            _tmObj.name = tm.getV1Nft1Group().getTokenName();
+            _tmObj.ticker = tm.getV1Nft1Group().getTokenTicker();
+          } else if (tm.hasV1Nft1Child()) {
+            _tmObj.name = tm.getV1Nft1Child().getTokenName();
+            _tmObj.ticker = tm.getV1Nft1Child().getTokenTicker();
+            _tmObj.nft_group_id = Buffer.from(tm.getV1Nft1Child().getGroupId()).toString("hex");
           }
           if (_tmObj.name === "") {
             _tmObj.name = "NA";
@@ -384,41 +392,6 @@ export default {
           }
           this.transactionData["token_metadata"] = _tmObj;
         }
-
-        // loop through inputs to find all tokens IDs involved in input burns, so we can fetch token metadata
-        // const burnedTokens = new Map();
-        // this.transactionData["inputs"].forEach((i) => {
-        //   if (i.getSlpToken()) {
-        //     const tok = i.getSlpToken();
-        //     const tokenId = Buffer.from(tok.getTokenId_asU8()).toString("hex");
-        //     //const versionType = Buffer.from([tok.getVersionType()]).toString("hex");
-        //     //const burnId = tokenId + versionType;
-        //     if (this.transactionData["token_metadata"]) {
-        //       if (tokenId !== this.transactionData["token_metadata"].token_id || versionType !== this.transactionData["slp_action"]) {
-        //         burnedTokens.set(tokenId, {});
-        //       }
-        //     } else {
-        //       burnedTokens.set(tokenId, {});
-        //     }
-        //   }
-        // });
-
-        // TODO: The async call causes burns inputs info to be missing.
-        // if (burnedTokens.size > 0) {
-        //   const _tm = await this.grpc.getTokenMetadata(Array.from(burnedTokens).map(i => i[0]));
-        //   for (const m of _tm.getTokenMetadataList()) {
-        //     const tokenId = Buffer.from(m.getTokenId_asU8()).toString("hex");
-        //     let ticker = `tokens (ID: ${tokenId.slice(0,5)})`;
-        //     if (m.getType1().getTokenTicker()) {
-        //       ticker = Buffer.from(m.getType1().getTokenTicker()).toString("utf8");
-        //     } else if (m.getNft1Group().getTokenTicker()) {
-        //       ticker = Buffer.from(m.getNft1Group().getTokenTicker()).toString("utf8");
-        //     } else if (m.hasNft1Child().getTokenTicker()) {
-        //       ticker = Buffer.from(m.getNft1Child().getTokenTicker()).toString("utf8");
-        //     }
-        //     burnedTokens.set(tokenId, { tokenId, ticker });
-        //   }
-        // }
 
         // loop through txn inputs to populate slp token view data
         const dat = this.transactionData;
@@ -584,15 +557,15 @@ export default {
         case 6:
           return "SLP_V1_SEND";
         case 7:
-          return "SLP_NFT1_GROUP_GENESIS";
+          return "SLP_V1_NFT1_GROUP_GENESIS";
         case 8:
-          return "SLP_NFT1_GROUP_MINT";
+          return "SLP_V1_NFT1_GROUP_MINT";
         case 9:
-          return "SLP_NFT1_GROUP_SEND";
+          return "SLP_V1_NFT1_GROUP_SEND";
         case 10:
-          return "SLP_NFT1_UNIQUE_CHILD_GENESIS";
+          return "SLP_V1_NFT1_UNIQUE_CHILD_GENESIS";
         case 11:
-          return "SLP_NFT1_UNIQUE_CHILD_SEND";
+          return "SLP_V1_NFT1_UNIQUE_CHILD_SEND";
         default:
           return "unknown type";
       }
