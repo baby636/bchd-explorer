@@ -24,7 +24,7 @@
           </option>
         </select>
       </div>
-      <br/>
+      <br>
       <div class="container">
         <img class="logo" src="../assets/slp-logo.svg" />
         <div class="field">
