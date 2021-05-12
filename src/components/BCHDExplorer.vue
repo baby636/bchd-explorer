@@ -12,6 +12,8 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
+
+ Copyright 2021 Simple Ledger, Inc. (slp logo & slp related modifications)
 -->
 
 <template>
@@ -58,7 +60,8 @@
         <BCHTransaction :transaction="transaction" v-bind:transactionData="transactionData" />
       </div>
     </section>
-    <footer class="has-text-centered">Copyright &copy; 2020 Coinbase — All rights reserved.</footer>
+    <footer class="has-text-centered">
+    </footer>
   </div>
 </template>
 
