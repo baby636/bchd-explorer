@@ -72,7 +72,7 @@ import BCHTransaction from "./BCHTransaction.vue";
 import sb from "satoshi-bitcoin";
 import prettyBytes from "pretty-bytes";
 
-const TESTNET = "testnet";
+const TESTNET3 = "testnet";
 const MAINNET = "mainnet";
 
 export default {
@@ -110,7 +110,7 @@ export default {
     };
   },
   mounted() {
-    this.testnet = this.$route.params.network === TESTNET;
+    this.testnet = this.$route.params.network === TESTNET3;
     this.updateNetwork();
 
     const params = this.$route.params;
@@ -122,7 +122,7 @@ export default {
   },
   watch: {
     $route(to) {
-      this.testnet = to.params.network === TESTNET;
+      this.testnet = to.params.network === TESTNET3;
       this.updateNetwork();
 
       this.input = "";
@@ -191,7 +191,7 @@ export default {
       this.result = "No address, transaction or block hash/height found.";
     },
     determineNetwork: function() {
-      return this.testnet ? TESTNET : MAINNET;
+      return this.testnet ? TESTNET3 : MAINNET;
     },
     populateAddressData: async function(addr) {
       try {
